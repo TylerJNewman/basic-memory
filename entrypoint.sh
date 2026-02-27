@@ -14,15 +14,16 @@ if command -v rclone &>/dev/null && [ -n "$RCLONE_CONFIG_R2_TYPE" ]; then
   SYNC_FILTER="/app/sync-filter.txt"
 
   # Persist bisync state across deploys on the Railway volume
-  export RCLONE_CACHE_DIR="/app/data/.cache/rclone"
-  mkdir -p "$RCLONE_CACHE_DIR/bisync"
+  CACHE_DIR="/app/data/.cache/rclone"
+  mkdir -p "$CACHE_DIR/bisync"
 
   # Establish bisync baseline if no state exists yet
-  if [ -z "$(ls -A "$RCLONE_CACHE_DIR/bisync/" 2>/dev/null)" ]; then
+  if [ -z "$(ls -A "$CACHE_DIR/bisync/" 2>/dev/null)" ]; then
     echo "[bm-sync] No bisync state found, running --resync to establish baseline..."
     rclone bisync /app/data/shared "r2:${SYNC_BUCKET}/shared" \
       --filter-from "$SYNC_FILTER" \
       --create-empty-src-dirs \
+      --cache-dir "$CACHE_DIR" \
       --resync \
       2>&1 | head -20
     echo "[bm-sync] Baseline established."
@@ -36,6 +37,7 @@ if command -v rclone &>/dev/null && [ -n "$RCLONE_CONFIG_R2_TYPE" ]; then
       rclone bisync /app/data/shared "r2:${SYNC_BUCKET}/shared" \
         --filter-from "$SYNC_FILTER" \
         --create-empty-src-dirs \
+        --cache-dir "$CACHE_DIR" \
         --resilient \
         --conflict-resolve newer \
         2>&1 | head -20
