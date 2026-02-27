@@ -343,7 +343,12 @@ delete_note("{identifier}")
 
 @mcp.tool(
     description="Move a note or directory to a new location, updating database and maintaining links.",
-    annotations={"destructiveHint": False, "openWorldHint": False},
+    annotations={
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
 )
 async def move_note(
     identifier: str,
