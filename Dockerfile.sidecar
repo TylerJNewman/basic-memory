@@ -13,6 +13,17 @@ WORKDIR /app
 RUN uv python install 3.13
 RUN uv sync --locked --python 3.13
 
+# Install rclone for R2 sync
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl unzip \
+    && curl -O https://downloads.rclone.org/current/rclone-current-linux-amd64.zip \
+    && unzip rclone-current-linux-amd64.zip \
+    && cp rclone-*-linux-amd64/rclone /usr/local/bin/ \
+    && rm -rf rclone-* \
+    && apt-get purge -y curl unzip \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
 # Create directories and ensure entrypoint is executable
 RUN mkdir -p /app/data /app/data/.config /app/data/shared && \
     chmod +x /app/entrypoint.sh
