@@ -13,12 +13,13 @@ WORKDIR /app
 RUN uv python install 3.13
 RUN uv sync --locked --python 3.13
 
-# Install rclone for R2 sync
+# Install rclone for R2 sync (pinned version for reproducible builds)
+ARG RCLONE_VERSION=1.73.1
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl unzip \
-    && curl -fsSL https://downloads.rclone.org/current/rclone-current-linux-amd64.zip -o /tmp/rclone.zip \
+    && curl -fsSL "https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-amd64.zip" -o /tmp/rclone.zip \
     && unzip /tmp/rclone.zip -d /tmp \
-    && cp /tmp/rclone-*-linux-amd64/rclone /usr/local/bin/ \
+    && cp /tmp/rclone-v${RCLONE_VERSION}-linux-amd64/rclone /usr/local/bin/ \
     && rm -rf /tmp/rclone* \
     && apt-get purge -y curl unzip \
     && apt-get autoremove -y \
