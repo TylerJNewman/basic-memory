@@ -26,6 +26,26 @@ if [ ! -f "$CONFIG_FILE" ]; then
   "default_project": "$PROJECT_NAME"
 }
 EOCFG
+else
+  # --- Reconcile project name ---
+  # Trigger: config.json exists but default_project doesn't match env var
+  # Why: env var is the intended source of truth for which project to serve;
+  #      a stale config.json from a previous deploy should not override it
+  # Outcome: rewrites config.json with the correct project name
+  CURRENT_DEFAULT=$(grep -o '"default_project":\s*"[^"]*"' "$CONFIG_FILE" | sed 's/.*"\([^"]*\)"/\1/')
+  if [ -n "$CURRENT_DEFAULT" ] && [ "$CURRENT_DEFAULT" != "$PROJECT_NAME" ]; then
+    echo "[bm-init] Updating config.json: project '$CURRENT_DEFAULT' -> '$PROJECT_NAME'"
+    cat > "$CONFIG_FILE" <<EOCFG
+{
+  "projects": {
+    "$PROJECT_NAME": {
+      "path": "$DATA_HOME"
+    }
+  },
+  "default_project": "$PROJECT_NAME"
+}
+EOCFG
+  fi
 fi
 
 # --- R2 Bisync Loop ---
