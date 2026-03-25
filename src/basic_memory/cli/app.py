@@ -64,6 +64,7 @@ def app_callback(
     skip_init_commands = {
         "doctor",
         "mcp",
+        "serve",
         "status",
         "sync",
         "project",

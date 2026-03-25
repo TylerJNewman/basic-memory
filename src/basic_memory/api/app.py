@@ -1,5 +1,6 @@
 """FastAPI application for basic-memory knowledge graph API."""
 
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -88,6 +89,19 @@ app.include_router(v2_importer, prefix="/v2/projects/{project_id}")
 app.include_router(v2_schema, prefix="/v2/projects/{project_id}")
 app.include_router(v2_project, prefix="/v2")
 
+# --- Proxy prefix paths ---
+# The CLI's --cloud routing prepends /proxy to all paths (base_url = {cloud_host}/proxy).
+# Mirror all v2 routes under /proxy/ so self-hosted deployments work with `bm tool --cloud`.
+app.include_router(v2_knowledge, prefix="/proxy/v2/projects/{project_id}")
+app.include_router(v2_memory, prefix="/proxy/v2/projects/{project_id}")
+app.include_router(v2_search, prefix="/proxy/v2/projects/{project_id}")
+app.include_router(v2_resource, prefix="/proxy/v2/projects/{project_id}")
+app.include_router(v2_directory, prefix="/proxy/v2/projects/{project_id}")
+app.include_router(v2_prompt, prefix="/proxy/v2/projects/{project_id}")
+app.include_router(v2_importer, prefix="/proxy/v2/projects/{project_id}")
+app.include_router(v2_schema, prefix="/proxy/v2/projects/{project_id}")
+app.include_router(v2_project, prefix="/proxy/v2")
+
 # Legacy web app proxy paths (compat with /proxy/projects/projects)
 app.include_router(v2_project, prefix="/proxy/projects")
 
@@ -98,6 +112,36 @@ legacy_router.add_api_route("/projects/projects", list_projects, methods=["GET"]
 legacy_router.add_api_route("/projects/projects", add_project, methods=["POST"])
 legacy_router.add_api_route("/projects/config/sync", synchronize_projects, methods=["POST"])
 app.include_router(legacy_router)
+
+# --- Health endpoint ---
+# Used by CLI `bm cloud status`, Railway healthchecks, and load balancers
+
+
+@app.get("/proxy/health")
+async def health():
+    """Health check endpoint returning server status, version, and timestamp."""
+    return {"status": "ok", "version": version, "timestamp": time.time()}
+
+
+# --- Workspace stub for self-hosted deployments ---
+# The CLI's cloud routing calls /workspaces/ to discover tenant workspaces.
+# Self-hosted servers don't have multi-tenancy, so return a single default workspace.
+
+
+@app.get("/workspaces/")
+async def list_workspaces():
+    """Return a single default workspace for self-hosted compatibility."""
+    return {
+        "workspaces": [
+            {
+                "tenant_id": "self-hosted",
+                "name": "default",
+                "workspace_type": "personal",
+                "role": "owner",
+            }
+        ]
+    }
+
 
 # V2 routers are the only public API surface
 

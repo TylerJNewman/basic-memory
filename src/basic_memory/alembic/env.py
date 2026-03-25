@@ -153,7 +153,7 @@ def run_migrations_online() -> None:
         try:
             asyncio.run(run_async_migrations(connectable))
         except RuntimeError as e:
-            if "cannot be called from a running event loop" in str(e):
+            if "cannot be called from a running event loop" in str(e) or "this event loop is already running" in str(e):
                 # We're in a running event loop (likely uvloop) - need to use a different approach
                 # Create a new thread to run the async migrations
                 import concurrent.futures
